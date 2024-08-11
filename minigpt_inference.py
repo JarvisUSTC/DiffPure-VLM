@@ -8,6 +8,7 @@ import torch.backends.cudnn as cudnn
 import gradio as gr
 from PIL import Image
 import json
+from tqdm import tqdm
 
 from minigpt4.common.config import Config
 from minigpt4.common.dist_utils import get_rank
@@ -44,6 +45,8 @@ def parse_args():
 
     parser.add_argument("--image_file", type=str, default='./image.bmp',
                         help="Image file")
+    parser.add_argument("--input_file", type=str, default='./harmful_corpus/rtp_prompts.jsonl',
+                        help="Harmful prompt file.")
     parser.add_argument("--output_file", type=str, default='./result.jsonl',
                         help="Output file.")
 
@@ -96,7 +99,7 @@ my_generator = generator.Generator(model=model)
 # ========================================
 
 ##  TODO: expose interface.
-datasets = rtp_read('harmful_corpus/rtp_prompts.jsonl')
+datasets = rtp_read(args.input_file)
 
 if args.mode == "TextOnly":
 
@@ -123,7 +126,7 @@ prompt = prompt_wrapper.Prompt(model=model, img_prompts=[img_prompt])
 
 out = []
 with torch.no_grad():
-    for i, user_message in enumerate(datasets):
+    for i, user_message in tqdm(enumerate(datasets), total=len(datasets), desc='Inference'):
         print(f" ----- {i} ----")
         print(" -- prompt: ---")
         print(text_prompt % user_message)

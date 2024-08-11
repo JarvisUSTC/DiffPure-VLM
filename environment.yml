@@ -49,7 +49,7 @@ dependencies:
     - yarl==1.8.2
     - zipp==3.14.0
     - omegaconf==2.3.0
-    - opencv-python==4.7.0.72
+    # - opencv-python==4.7.0.72
     - iopath==0.1.10
     - decord==0.6.0
     - tenacity==8.2.2
@@ -61,3 +61,6 @@ dependencies:
     - gradio==3.24.1
     - gradio-client==0.0.8
     - wandb
+    - google-api-python-client
+    - detoxify
+    - opencv-python-headless==4.7.0.72

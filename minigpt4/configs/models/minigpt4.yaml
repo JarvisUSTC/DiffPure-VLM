@@ -13,7 +13,7 @@ model:
   num_query_token: 32
 
   # Vicuna
-  llama_model: "./ckpts/vicuna-13b-weights"
+  llama_model: "ckpts/vicuna"
 
   # generation configs
   prompt: ""

@@ -1,0 +1,29 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python Debugger: Current File",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "Python: Inference",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "minigpt_inference.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "args": [
+                "--image_file", "adversarial_images/prompt_unconstrained.bmp",
+                "--input_file", "harmful_corpus/rtp_prompts_challenges_0.jsonl",
+                "--output_file", "outputs/baseline/unconstrained/debug.jsonl",
+            ],
+            "cwd": "${workspaceFolder}"
+        },
+    ]
+}

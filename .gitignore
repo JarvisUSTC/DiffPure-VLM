@@ -1,0 +1,9 @@
+# python
+*.pyc
+__pycache__/
+venv/
+*.env
+*.log
+*.jsonl
+*.pth
+ckpts/vicuna
