@@ -27,7 +27,7 @@ def denormalize(images):
 
 class Attacker:
 
-    def __init__(self, args, model, targets, device='cuda:0', is_rtp=False):
+    def __init__(self, args, model, targets, device='cuda:0', is_rtp=False, attack_diffusion=None):
 
         self.args = args
         self.model = model
@@ -42,6 +42,8 @@ class Attacker:
         # freeze and set to eval model:
         self.model.eval()
         self.model.requires_grad_(False)
+
+        self.attack_diffusion = attack_diffusion
 
     def attack_unconstrained(self, text_prompt, img, batch_size = 8, num_iter=2000, alpha=1/255):
 
@@ -119,7 +121,14 @@ class Attacker:
             text_prompts = [text_prompt] * batch_size
 
             x_adv = x + adv_noise
-            x_adv = normalize(x_adv)
+            if self.attack_diffusion is not None:
+                if self.attack_diffusion.is_imagenet:
+                    x_adv = self.attack_diffusion(x_adv)
+                else:
+                    x_adv = self.attack_diffusion(x_adv)
+                    x_adv = normalize(x_adv)
+            else:
+                x_adv = normalize(x_adv)
 
             prompt = prompt_wrapper.Prompt(model=self.model, text_prompts=text_prompts, img_prompts=[[x_adv]])
             prompt.img_embs = prompt.img_embs * batch_size
@@ -132,6 +141,92 @@ class Attacker:
             adv_noise.data = (adv_noise.data + x.data).clamp(0, 1) - x.data
             adv_noise.grad.zero_()
             self.model.zero_grad()
+
+            self.loss_buffer.append(target_loss.item())
+
+            print("target_loss: %f" % (
+                target_loss.item())
+                  )
+
+            if t % 20 == 0:
+                self.plot_loss()
+
+            if t % 100 == 0:
+                print('######### Output - Iter = %d ##########' % t)
+                x_adv = x + adv_noise
+                x_adv = normalize(x_adv)
+                prompt.update_img_prompts([[x_adv]])
+                prompt.img_embs = prompt.img_embs * batch_size
+                prompt.update_context_embs()
+                with torch.no_grad():
+                    response, _ = my_generator.generate(prompt)
+                print('>>>', response)
+
+                adv_img_prompt = denormalize(x_adv).detach().cpu()
+                adv_img_prompt = adv_img_prompt.squeeze(0)
+                save_image(adv_img_prompt, '%s/bad_prompt_temp_%d.bmp' % (self.args.save_dir, t))
+
+        return adv_img_prompt
+
+    def attack_constrained_diffusion(self, text_prompt, img, batch_size = 8, num_iter=2000, alpha=1/255, epsilon = 128/255, eot=1):
+
+        print('>>> batch_size:', batch_size)
+
+        my_generator = generator.Generator(model=self.model)
+
+
+        adv_noise = torch.rand_like(img).to(self.device) * 2 * epsilon - epsilon
+        x = denormalize(img).clone().to(self.device)
+        adv_noise.data = (adv_noise.data + x.data).clamp(0, 1) - x.data
+
+        adv_noise.requires_grad_(True)
+        adv_noise.retain_grad()
+
+
+        for t in tqdm(range(num_iter + 1)):
+
+            batch_targets = random.sample(self.targets, batch_size)
+
+            text_prompts = [text_prompt] * batch_size
+
+            # 初始化累计梯度
+            cumulative_grad = torch.zeros_like(adv_noise)
+
+            # 开始 eot 次循环
+            for i in range(eot):
+                # 生成对抗样本
+                x_adv = x + adv_noise
+                if self.attack_diffusion is not None:
+                    if self.attack_diffusion.is_imagenet:
+                        x_adv = self.attack_diffusion(x_adv)
+                    else:
+                        x_adv = self.attack_diffusion(x_adv)
+                        x_adv = normalize(x_adv)
+                else:
+                    x_adv = normalize(x_adv)
+
+                # 构建 Prompt
+                prompt = prompt_wrapper.Prompt(model=self.model, text_prompts=text_prompts, img_prompts=[[x_adv]])
+                prompt.img_embs = prompt.img_embs * batch_size
+                prompt.update_context_embs()
+
+                # 计算损失并反向传播
+                target_loss = self.attack_loss(prompt, batch_targets)
+                target_loss.backward()
+
+                # 累积梯度
+                cumulative_grad += adv_noise.grad.detach()
+
+                # 清空梯度
+                adv_noise.grad.zero_()
+                self.model.zero_grad()
+
+            # 计算平均梯度
+            avg_grad = cumulative_grad / eot
+
+            # 更新对抗噪声
+            adv_noise.data = (adv_noise.data - alpha * avg_grad.sign()).clamp(-epsilon, epsilon)
+            adv_noise.data = (adv_noise.data + x.data).clamp(0, 1) - x.data
 
             self.loss_buffer.append(target_loss.item())
 

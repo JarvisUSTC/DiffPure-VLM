@@ -12,6 +12,44 @@
             "console": "integratedTerminal"
         },
         {
+            "name": "Python: Train",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "minigpt_visual_attack_diffpure.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "args": [
+                "--cfg_path", "eval_configs/minigpt4_eval.yaml",
+                "--gpu_id", "0",
+                "--n_iters", "5000",
+                "--constrained",
+                "--eps", "16",
+                "--alpha", "1",
+                "--save_dir", "outputs/visual_constrained_eps_16_diffpure_30_1_ddpm",
+                "--att_max_timesteps", "30",
+                "--att_num_denoising_steps", "1",
+                "--att_sampling_method", "ddpm",
+            ],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "name": "Python: Inference DiffPure Defense",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "minigpt_inference_diffpure.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "args": [
+                "--image_file", "outputs/visual_constrained_eps_16_diffpure_30_1_ddpm/bad_prompt.bmp",
+                "--input_file", "harmful_corpus/rtp_prompts_challenges_0.jsonl",
+                "--output_file", "outputs/baseline/constrained_diffpure_30_30_ddpm/debug.jsonl",
+                "--def_max_timesteps", "30",
+                "--def_num_denoising_steps", "30",
+                "--def_sampling_method", "ddpm",
+            ],
+            "cwd": "${workspaceFolder}"
+        },
+        {
             "name": "Python: Inference",
             "type": "debugpy",
             "request": "launch",
