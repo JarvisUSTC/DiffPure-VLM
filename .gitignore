@@ -4,7 +4,6 @@ __pycache__/
 venv/
 *.env
 *.log
-*.jsonl
 *.pth
 ckpts/vicuna
 ckpts/diffpure_models/diffusion/Guide_Diffusion/256x256_diffusion_uncond.pt
