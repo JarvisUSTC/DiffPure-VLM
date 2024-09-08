@@ -46,6 +46,8 @@ def parse_args():
     parser.add_argument('--eps', type=int, default=32, help="epsilon of the attack budget")
     parser.add_argument('--alpha', type=int, default=1, help="step_size of the attack")
     parser.add_argument("--constrained", default=False, action='store_true')
+    parser.add_argument("--init_image", type=str, default="adversarial_images/clean.jpeg", help="path to the initial image.")
+    parser.add_argument("--batch_size", type=int, default=8, help="batch size for attack.")
 
     # Purification hyperparameters in attack generation
     parser.add_argument("--att_max_timesteps", type=str, required=True,
@@ -132,7 +134,8 @@ for i in range(num):
 
 my_attacker = visual_attacker.Attacker(args, model, targets, device=model.device, is_rtp=False, attack_diffusion=attack_forward_diffusion)
 
-template_img = 'adversarial_images/clean.jpeg'
+# template_img = 'adversarial_images/clean.jpeg'
+template_img = args.init_image
 img = Image.open(template_img).convert('RGB')
 img = vis_processor(img).unsqueeze(0).to(model.device)
 
@@ -145,12 +148,12 @@ if not args.constrained:
 
 
     adv_img_prompt = my_attacker.attack_unconstrained(text_prompt_template,
-                                                            img=img, batch_size = 8,
-                                                            num_iter=5000, alpha=args.alpha/255)
+                                                            img=img, batch_size = args.batch_size,
+                                                            num_iter=args.n_iters, alpha=args.alpha/255)
 else:
     adv_img_prompt = my_attacker.attack_constrained_diffusion(text_prompt_template,
-                                                            img=img, batch_size= 8,
-                                                            num_iter=5000, alpha=args.alpha / 255,
+                                                            img=img, batch_size= args.batch_size,
+                                                            num_iter=args.n_iters, alpha=args.alpha / 255,
                                                             epsilon=args.eps / 255, eot=args.eot)
 
 save_image(adv_img_prompt, '%s/bad_prompt.bmp' % args.save_dir)
