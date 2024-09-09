@@ -28,7 +28,8 @@ from transformers import BertTokenizer
 class Blip2Base(BaseModel):
     @classmethod
     def init_tokenizer(cls):
-        tokenizer = BertTokenizer.from_pretrained("bert-base-uncased")
+        # tokenizer = BertTokenizer.from_pretrained("bert-base-uncased")
+        tokenizer = BertTokenizer.from_pretrained("/raid/zys/DiffPure-VLM/ckpts/bert-base-uncased")
         tokenizer.add_special_tokens({"bos_token": "[DEC]"})
         return tokenizer
 

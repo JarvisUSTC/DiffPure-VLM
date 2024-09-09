@@ -1,0 +1,1 @@
+CUDA_VISIBLE_DEVICES=10 python -u instructblip_visual_attack.py --n_iters 5000 --constrained --save_dir results_blip_constrained_16 --eps 16 --alpha 1
