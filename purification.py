@@ -15,7 +15,7 @@ def get_beta_schedule(beta_start, beta_end, num_diffusion_timesteps):
 
 
 class PurificationForward(torch.nn.Module):
-    def __init__(self, diffusion, max_timestep, attack_steps, sampling_method, is_imagenet, device, debug=False):
+    def __init__(self, diffusion, max_timestep, attack_steps, sampling_method, is_imagenet, device, debug=False, explore=False):
         super().__init__()
         self.diffusion = diffusion
         self.betas = get_beta_schedule(1e-4, 2e-2, 1000).to(device)
@@ -29,6 +29,7 @@ class PurificationForward(torch.nn.Module):
             self.eta = 1
         self.is_imagenet = is_imagenet
         self.debug = debug
+        self.explore = explore
 
     def compute_alpha(self, t):
         beta = torch.cat(
@@ -91,6 +92,11 @@ class PurificationForward(torch.nn.Module):
         for i in range(len(self.max_timestep)):
             noised_x = self.get_noised_x(x_diff, self.max_timestep[i])
             x_diff = self.denoising_process(noised_x, self.attack_steps[i])
+
+            if self.explore:
+                noised_x_explore = diff2clf(noised_x).clamp(0,1)
+                x_diff_explore = diff2clf(x_diff).clamp(0,1)
+                return noised_x_explore, x_diff_explore
 
         # classifier part
         if self.is_imagenet:
