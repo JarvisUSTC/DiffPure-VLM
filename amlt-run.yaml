@@ -65,18 +65,20 @@ search:
     - name: project_name
       spec: discrete 
       values:
-      - "defense"
-      # - "baseline"
+      # - "defense"
+      - "baseline"
 
     - name: condition
       spec: discrete
       values: 
-      - "unconstrained-ddpm-50"
+      # - "unconstrained-ddpm-50"
+      - "constrained-16"
 
     - name: image_path
       spec: discrete
       values: 
-      - "defense/diffusion/denoised.jpg"
+      # - "defense/diffusion/denoised.jpg"
+      - "adversarial_images/random_noisy_constrained_16.bmp"
       
 code:
   local_dir: ./

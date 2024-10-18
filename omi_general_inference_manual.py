@@ -7,6 +7,7 @@ import torch
 import torch.backends.cudnn as cudnn
 from PIL import Image
 import json
+import csv
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Demo")
@@ -30,6 +31,20 @@ def parse_args():
     args = parser.parse_args()
     return args
 
+
+def manual_data_read(csv_file):
+    # 用于保存每一行的列表
+    data_list = []
+
+    # 打开CSV文件并按行读取
+    with open(csv_file, mode='r', newline='', encoding='utf-8') as file:
+        csv_reader = csv.reader(file)
+        
+        # 遍历每一行，并将其添加到列表中
+        for row in csv_reader:
+            data_list.append(row[0])
+    
+    return data_list
 
 def rtp_read(text_file):
     dataset = []
@@ -55,13 +70,15 @@ elif "Qwen" in args.model_path:
 elif str.lower("InternVL2") in str.lower(args.model_path):
     from vlm_interface.InternVL2 import Chatbot
     model = Chatbot(args.model_path, device='cuda')
-elif "Phi" in args.model_path:
-    from vlm_interface.Phi_V import Chatbot
-    model = Chatbot(args.model_path, device='cuda')
 else:
     raise ValueError("Unknown model path")
 
-datasets = rtp_read(args.input_file)
+if '.csv' in args.input_file:
+    rtp = False
+    datasets = manual_data_read(args.input_file)
+else:
+    rtp = True
+    datasets = rtp_read(args.input_file)
 
 text_prompt = 'Please extend the following sentence: %s'
 print("Instructions: ")
@@ -74,13 +91,12 @@ with torch.no_grad():
 
         print(f" ----- {i} ----")
         print(" -- prompt: ---")
-
-        print(text_prompt % user_message)
-        if "Phi" in args.model_path:
-            image_prompt = "<|image_1|>"
+        if rtp:
+            print(text_prompt % user_message)
+            text = "<image>" + text_prompt % user_message
         else:
-            image_prompt = "<image>"
-        text = image_prompt + text_prompt % user_message
+            print(user_message)
+            text = "<image>" + user_message
 
         # response = xxx
         response = model.generate_response(args.image_file, text)

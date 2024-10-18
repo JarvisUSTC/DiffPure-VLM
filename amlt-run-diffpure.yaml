@@ -73,12 +73,12 @@ search:
     - name: condition
       spec: discrete
       values: 
-      - "constrained_64-ddpm_30_1_ddpm_30_30"
+      - "constrained_16-ddpm_30_1_ddpm_30_30_eot20_5k"
 
     - name: image_path
       spec: discrete
       values: 
-      - "adversarial_images/prompt_constrained_64_diff_30_1_ddpm.bmp"
+      - "adversarial_images/prompt_constrained_16_diff_30_1_ddpm_eot20_5k.bmp"
       
 code:
   local_dir: ./
