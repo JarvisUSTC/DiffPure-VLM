@@ -94,8 +94,10 @@ class PurificationForward(torch.nn.Module):
             x_diff = self.denoising_process(noised_x, self.attack_steps[i])
 
             if self.explore:
-                noised_x_explore = diff2clf(noised_x).clamp(0,1)
-                x_diff_explore = diff2clf(x_diff).clamp(0,1)
+                noised_x_explore = diff2clf(F.interpolate(noised_x, size=(
+                224, 224), mode='bilinear', align_corners=False)).clamp(0,1)
+                x_diff_explore = diff2clf(F.interpolate(x_diff, size=(
+                224, 224), mode='bilinear', align_corners=False)).clamp(0,1)
                 return noised_x_explore, x_diff_explore
 
         # classifier part

@@ -8,6 +8,7 @@ from purification import PurificationForward
 # from minigpt4.common.registry import registry
 import torch.nn as nn
 import torchvision.transforms as T
+from torch.cuda.amp import autocast as autocast
 from torchvision.transforms.functional import InterpolationMode
 
 from lavis.models.eva_vit import create_eva_vit_g
@@ -81,6 +82,17 @@ def denormalize(images):
     images = images + mean[None, :, None, None]
     return images
 
+
+def maybe_autocast(device, dtype=torch.float16):
+    # if on cpu, don't use autocast
+    # if on gpu, use autocast with dtype if provided, otherwise use torch.float16
+    enable_autocast = device != torch.device("cpu")
+
+    if enable_autocast:
+        return torch.cuda.amp.autocast(dtype=dtype)
+    else:
+        return contextlib.nullcontext()
+
 args = parse_args()
 # cfg = Config(args)
 
@@ -119,7 +131,8 @@ ToImage = T.ToPILImage()
 
 adv_img = Image.open(args.image_file).convert('RGB')
 adv_img_tensor = vis_processor_pixel(adv_img).unsqueeze(0).to(device)
-noised_img, diffused_img = diffusion_process(adv_img_tensor)
+with torch.no_grad():
+    noised_img, diffused_img = diffusion_process(adv_img_tensor)
 
 # test
 # noised_img = adv_img_tensor
@@ -163,7 +176,7 @@ print('MSE_Dist_4 with F {} R {} (MSE distance of noisy_image_2 (clean image add
 
 # For distance calculation in embedding space, all images should be normalized based on visual encoder.
 # init vision encoder first
-def get_embed_from_vision_encoder(input_image, model_name="eva_clip_g", img_size=224, drop_path_rate=0, use_grad_checkpoint=False, precision="fp16"):
+def get_embed_from_vision_encoder(input_image, model_name="eva_clip_g", img_size=224, drop_path_rate=0, use_grad_checkpoint=False, precision="fp16", device=torch.device("cpu")):
     assert model_name in [
         "eva_clip_g",
         "eva2_clip_L",
@@ -180,21 +193,24 @@ def get_embed_from_vision_encoder(input_image, model_name="eva_clip_g", img_size
     elif model_name == "clip_L":
         visual_encoder = create_clip_vit_L(img_size, use_grad_checkpoint, precision)
     ln_vision = LayerNorm(visual_encoder.num_features)
+    visual_encoder = visual_encoder.to(device)
+    ln_vision = ln_vision.to(device)
 
     for name, param in visual_encoder.named_parameters():
         param.requires_grad = False
     visual_encoder = visual_encoder.eval()
     visual_encoder.train = disabled_train
-    image_embeds = ln_vision(visual_encoder(input_image))
+    with maybe_autocast(device):
+        image_embeds = ln_vision(visual_encoder(input_image))
     return image_embeds
 
 
-adv_image_embeds = get_embed_from_vision_encoder(vis_processor_embed(adv_img_tensor))
-noised_img_embeds = get_embed_from_vision_encoder(vis_processor_embed(noised_img))
-diffused_img_embeds = get_embed_from_vision_encoder(vis_processor_embed(diffused_img))
-clean_image_embeds = get_embed_from_vision_encoder(vis_processor_embed(clean_img_align))
-noisy_image_1_embeds = get_embed_from_vision_encoder(vis_processor_embed(noisy_image_1))
-noisy_image_2_embeds = get_embed_from_vision_encoder(vis_processor_embed(noisy_image_2))
+adv_image_embeds = get_embed_from_vision_encoder(vis_processor_embed(adv_img_tensor), device=device)
+noised_img_embeds = get_embed_from_vision_encoder(vis_processor_embed(noised_img), device=device)
+diffused_img_embeds = get_embed_from_vision_encoder(vis_processor_embed(diffused_img), device=device)
+clean_image_embeds = get_embed_from_vision_encoder(vis_processor_embed(clean_img_align), device=device)
+noisy_image_1_embeds = get_embed_from_vision_encoder(vis_processor_embed(noisy_image_1), device=device)
+noisy_image_2_embeds = get_embed_from_vision_encoder(vis_processor_embed(noisy_image_2), device=device)
 
 # Calculate the MSE distance of clean image and adv. img in embedding space
 MSE_Dist_5 = l2_loss(clean_image_embeds, adv_image_embeds)
@@ -239,7 +255,7 @@ noised_img_out.save(os.path.join(args.output_folder, 'Adv_img_Diff_F.jpg'))
 diffused_img_out = ToImage(diffused_img.squeeze(0).cpu())
 diffused_img_out.save(os.path.join(args.output_folder, 'Adv_img_Diff_F_Diff_R.jpg'))
 noisy_image_1_out = ToImage(noisy_image_1.squeeze(0).cpu())
-noisy_image_1_out.save(os.path.join(args.output_folder, 'Clean_img_add_noise_2.jpg'))
+noisy_image_1_out.save(os.path.join(args.output_folder, 'Clean_img_add_noise_1.jpg'))
 noisy_image_2_out = ToImage(noisy_image_2.squeeze(0).cpu())
 noisy_image_2_out.save(os.path.join(args.output_folder, 'Clean_img_add_noise_2_noise_1.jpg'))
 
