@@ -7,6 +7,7 @@ from purification import PurificationForward
 # from minigpt4.common.config import Config
 # from minigpt4.common.registry import registry
 import torch.nn as nn
+import torch.nn.functional as F
 import torchvision.transforms as T
 from torch.cuda.amp import autocast as autocast
 from torchvision.transforms.functional import InterpolationMode
@@ -154,24 +155,32 @@ l2_loss = torch.nn.MSELoss()
 
 # For distance calculation in pixel space, all images are normalized to [0, 1], tensor, cuda.
 # Calculate the MSE distance of clean image and adv. img
-MSE_Dist_0 = l2_loss(clean_img_align, adv_img_tensor)
-print('MSE_Dist_0 (clean image and adv. image): {}'.format(MSE_Dist_0))
+MSE_Dist_1 = l2_loss(clean_img_align, adv_img_tensor)
+print('MSE_Dist_1 (clean image and adv. image): {}'.format(MSE_Dist_1))
+
+# Calculate the MSE distance of clean image and 'noisy_image_1' (clean image add noise_1)
+MSE_Dist_2 = l2_loss(clean_img_align, noisy_image_1)
+print('MSE_Dist_2 (clean image and noisy_image_1 (clean image add noise_1)): {}'.format(MSE_Dist_2))
+
+# Calculate the MSE distance of clean image and 'noisy_image_2' (clean image add noise_1 and noise_2)
+MSE_Dist_3 = l2_loss(clean_img_align, noisy_image_2)
+print('MSE_Dist_3 (clean image and noisy_image_2 (clean image add noise_1 and noise_2)): {}'.format(MSE_Dist_3))
 
 # Calculate the MSE distance of 'noisy_image_1' (clean image add noise_1) and adv. img
-MSE_Dist_1 = l2_loss(noisy_image_1, adv_img_tensor)
-print('MSE_Dist_1 (MSE distance of noisy_image_1 (clean image add noise_1) and adv. image): {}'.format(MSE_Dist_1))
+MSE_Dist_4 = l2_loss(noisy_image_1, adv_img_tensor)
+print('MSE_Dist_4 (MSE distance of noisy_image_1 (clean image add noise_1) and adv. image): {}'.format(MSE_Dist_4))
 
 # Calculate the MSE distance of 'noisy_image_2' (clean image add noise_1 and noise_2) and adv. img
-MSE_Dist_2 = l2_loss(noisy_image_2, adv_img_tensor)
-print('MSE_Dist_2 (MSE distance of noisy_image_2 (clean image add noise_1 and noise_2) and adv. image): {}'.format(MSE_Dist_2))
+MSE_Dist_5 = l2_loss(noisy_image_2, adv_img_tensor)
+print('MSE_Dist_5 (MSE distance of noisy_image_2 (clean image add noise_1 and noise_2) and adv. image): {}'.format(MSE_Dist_5))
 
 # Calculate the MSE distance of 'noisy_image_1' (clean image add noise_1) and 'diffused_img' (adv. image f and r)
-MSE_Dist_3 = l2_loss(noisy_image_1, diffused_img)
-print('MSE_Dist_3 with F {} R {} (MSE distance of noisy_image_1 (clean image add noise_1) and diffused_img (adv. image f and r)): {}'.format(def_max_timesteps[0] + 1, def_diffusion_steps[0][-1] + 1, MSE_Dist_3))
+MSE_Dist_6 = l2_loss(noisy_image_1, diffused_img)
+print('MSE_Dist_6 with F {} R {} (MSE distance of noisy_image_1 (clean image add noise_1) and diffused_img (adv. image f and r)): {}'.format(def_max_timesteps[0] + 1, def_diffusion_steps[0][-1] + 1, MSE_Dist_6))
 
 # Calculate the MSE distance of 'noisy_image_2' (clean image add noise_1 and noise_2) and 'noised_img' (adv. image f)
-MSE_Dist_4 = l2_loss(noisy_image_2, noised_img)
-print('MSE_Dist_4 with F {} R {} (MSE distance of noisy_image_2 (clean image add noise_1 and noise_2) and noised_img (adv. image f)): {}'.format(def_max_timesteps[0] + 1, def_diffusion_steps[0][-1] + 1, MSE_Dist_4))
+MSE_Dist_7 = l2_loss(noisy_image_2, noised_img)
+print('MSE_Dist_7 with F {} R {} (MSE distance of noisy_image_2 (clean image add noise_1 and noise_2) and noised_img (adv. image f)): {}'.format(def_max_timesteps[0] + 1, def_diffusion_steps[0][-1] + 1, MSE_Dist_7))
 
 
 # For distance calculation in embedding space, all images should be normalized based on visual encoder.
@@ -212,42 +221,62 @@ clean_image_embeds = get_embed_from_vision_encoder(vis_processor_embed(clean_img
 noisy_image_1_embeds = get_embed_from_vision_encoder(vis_processor_embed(noisy_image_1), device=device)
 noisy_image_2_embeds = get_embed_from_vision_encoder(vis_processor_embed(noisy_image_2), device=device)
 
-# Calculate the MSE distance of clean image and adv. img in embedding space
-MSE_Dist_5 = l2_loss(clean_image_embeds, adv_image_embeds)
-print('MSE_Dist_5 (clean image and adv. image) in embedding space: {}'.format(MSE_Dist_5))
+print('visual embedding size: ', adv_image_embeds.size())
 
-# Calculate the MSE distance of 'noisy_image_1' (clean image add noise_1) and adv. img in embedding space
-MSE_Dist_6 = l2_loss(noisy_image_1_embeds, adv_image_embeds)
-print('MSE_Dist_6 (MSE distance of noisy_image_1 (clean image add noise_1) and adv. image) in embedding space: {}'.format(MSE_Dist_6))
+# Calculate the Cosine Similarity of clean image and adv. img in embedding space
+# MSE_Dist_5 = l2_loss(clean_image_embeds, adv_image_embeds)
+Cos_sim_1 = F.cosine_similarity(clean_image_embeds.view(1, -1), adv_image_embeds.view(1, -1)).item()
+print('Cos_sim_1 (clean image and adv. image) in embedding space: {}'.format(Cos_sim_1))
 
-# Calculate the MSE distance of 'noisy_image_2' (clean image add noise_1 and noise_2) and adv. img in embedding space
-MSE_Dist_7 = l2_loss(noisy_image_2_embeds, adv_image_embeds)
-print('MSE_Dist_7 (MSE distance of noisy_image_2 (clean image add noise_1 and noise_2) and adv. image) in embedding space: {}'.format(MSE_Dist_7))
+# Calculate the Cosine Similarity of clean image and 'noisy_image_1' (clean image add noise_1) in embedding space
+Cos_sim_2 = F.cosine_similarity(clean_image_embeds.view(1, -1), noisy_image_1_embeds.view(1, -1)).item()
+print('Cos_sim_2 (clean image and noisy_image_1 (clean image add noise_1)) in embedding space: {}'.format(Cos_sim_2))
 
-# Calculate the MSE distance of 'noisy_image_1' (clean image add noise_1) and 'diffused_img' (adv. image f and r) in embedding space
-MSE_Dist_8 = l2_loss(noisy_image_1_embeds, diffused_img_embeds)
-print('MSE_Dist_8 with F {} R {} (MSE distance of noisy_image_1 (clean image add noise_1) and diffused_img (adv. image f and r)) in embedding space: {}'.format(def_max_timesteps[0] + 1, def_diffusion_steps[0][-1] + 1, MSE_Dist_8))
+# Calculate the Cosine Similarity of clean image and 'noisy_image_2' (clean image add noise_1 and noise_2) in embedding space
+Cos_sim_3 = F.cosine_similarity(clean_image_embeds.view(1, -1), noisy_image_2_embeds.view(1, -1)).item()
+print('Cos_sim_3 (clean image and noisy_image_2 (clean image add noise_1 and noise_2)) in embedding space: {}'.format(Cos_sim_3))
 
-# Calculate the MSE distance of 'noisy_image_2' (clean image add noise_1 and noise_2) and 'noised_img' (adv. image f) in embedding space
-MSE_Dist_9 = l2_loss(noisy_image_2_embeds, noised_img_embeds)
-print('MSE_Dist_9 with F {} R {} (MSE distance of noisy_image_2 (clean image add noise_1 and noise_2) and noised_img (adv. image f)) in embedding space: {}'.format(def_max_timesteps[0] + 1, def_diffusion_steps[0][-1] + 1, MSE_Dist_9))
+# Calculate the Cosine Similarity of 'noisy_image_1' (clean image add noise_1) and adv. img in embedding space
+# MSE_Dist_6 = l2_loss(noisy_image_1_embeds, adv_image_embeds)
+Cos_sim_4 = F.cosine_similarity(noisy_image_1_embeds.view(1, -1), adv_image_embeds.view(1, -1)).item()
+print('Cos_sim_4 (noisy_image_1 (clean image add noise_1) and adv. image) in embedding space: {}'.format(Cos_sim_4))
+
+# Calculate the Cosine Similarity of 'noisy_image_2' (clean image add noise_1 and noise_2) and adv. img in embedding space
+# MSE_Dist_7 = l2_loss(noisy_image_2_embeds, adv_image_embeds)
+Cos_sim_5 = F.cosine_similarity(noisy_image_2_embeds.view(1, -1), adv_image_embeds.view(1, -1)).item()
+print('Cos_sim_5 (noisy_image_2 (clean image add noise_1 and noise_2) and adv. image) in embedding space: {}'.format(Cos_sim_5))
+
+# Calculate the Cosine Similarity of 'noisy_image_1' (clean image add noise_1) and 'diffused_img' (adv. image f and r) in embedding space
+# MSE_Dist_8 = l2_loss(noisy_image_1_embeds, diffused_img_embeds)
+Cos_sim_6 = F.cosine_similarity(noisy_image_1_embeds.view(1, -1), diffused_img_embeds.view(1, -1)).item()
+print('Cos_sim_6 with F {} R {} (noisy_image_1 (clean image add noise_1) and diffused_img (adv. image f and r)) in embedding space: {}'.format(def_max_timesteps[0] + 1, def_diffusion_steps[0][-1] + 1, Cos_sim_6))
+
+# Calculate the Cosine Similarity of 'noisy_image_2' (clean image add noise_1 and noise_2) and 'noised_img' (adv. image f) in embedding space
+# MSE_Dist_9 = l2_loss(noisy_image_2_embeds, noised_img_embeds)
+Cos_sim_7 = F.cosine_similarity(noisy_image_2_embeds.view(1, -1), noised_img_embeds.view(1, -1)).item()
+print('Cos_sim_7 with F {} R {} (noisy_image_2 (clean image add noise_1 and noise_2) and noised_img (adv. image f)) in embedding space: {}'.format(def_max_timesteps[0] + 1, def_diffusion_steps[0][-1] + 1, Cos_sim_7))
 
 
 
 
 # Output metrics
 with open(os.path.join(args.output_folder, 'result.txt'), 'a') as f:
-    f.write('MSE_Dist_0 (clean image and adv. image): {}'.format(MSE_Dist_0) + '\n')
-    f.write('MSE_Dist_1 (MSE distance of noisy_image_1 (clean image add noise_1) and adv. image): {}'.format(MSE_Dist_1) + '\n')
-    f.write('MSE_Dist_2 (MSE distance of noisy_image_2 (clean image add noise_1 and noise_2) and adv. image): {}'.format(MSE_Dist_2) + '\n')
-    f.write('MSE_Dist_3 with F {} R {} (MSE distance of noisy_image_1 (clean image add noise_1) and diffused_img (adv. image f and r)): {}'.format(def_max_timesteps[0] + 1, def_diffusion_steps[0][-1] + 1, MSE_Dist_3) + '\n')
-    f.write('MSE_Dist_4 with F {} R {} (MSE distance of noisy_image_2 (clean image add noise_1 and noise_2) and noised_img (adv. image f)): {}'.format(def_max_timesteps[0] + 1, def_diffusion_steps[0][-1] + 1, MSE_Dist_4) + '\n')
-    f.write('MSE_Dist_5 (clean image and adv. image) in embedding space: {}'.format(MSE_Dist_5) + '\n')
-    f.write('MSE_Dist_6 (MSE distance of noisy_image_1 (clean image add noise_1) and adv. image) in embedding space: {}'.format(MSE_Dist_6) + '\n')
-    f.write('MSE_Dist_7 (MSE distance of noisy_image_2 (clean image add noise_1 and noise_2) and adv. image) in embedding space: {}'.format(MSE_Dist_7) + '\n')
-    f.write('MSE_Dist_8 with F {} R {} (MSE distance of noisy_image_1 (clean image add noise_1) and diffused_img (adv. image f and r)) in embedding space: {}'.format(def_max_timesteps[0] + 1, def_diffusion_steps[0][-1] + 1, MSE_Dist_8) + '\n')
-    f.write('MSE_Dist_9 with F {} R {} (MSE distance of noisy_image_2 (clean image add noise_1 and noise_2) and noised_img (adv. image f)) in embedding space: {}'.format(def_max_timesteps[0] + 1, def_diffusion_steps[0][-1] + 1, MSE_Dist_9) + '\n')
-    
+    f.write('MSE_Dist_1 (clean image and adv. image): {}'.format(MSE_Dist_1) + '\n')
+    f.write('MSE_Dist_2 (clean image and noisy_image_1 (clean image add noise_1)): {}'.format(MSE_Dist_2) + '\n')
+    f.write('MSE_Dist_3 (clean image and noisy_image_2 (clean image add noise_1 and noise_2)): {}'.format(MSE_Dist_3) + '\n')
+    f.write('MSE_Dist_4 (MSE distance of noisy_image_1 (clean image add noise_1) and adv. image): {}'.format(MSE_Dist_4) + '\n')
+    f.write('MSE_Dist_5 (MSE distance of noisy_image_2 (clean image add noise_1 and noise_2) and adv. image): {}'.format(MSE_Dist_5) + '\n')
+    f.write('MSE_Dist_6 with F {} R {} (MSE distance of noisy_image_1 (clean image add noise_1) and diffused_img (adv. image f and r)): {}'.format(def_max_timesteps[0] + 1, def_diffusion_steps[0][-1] + 1, MSE_Dist_6) + '\n')
+    f.write('MSE_Dist_7 with F {} R {} (MSE distance of noisy_image_2 (clean image add noise_1 and noise_2) and noised_img (adv. image f)): {}'.format(def_max_timesteps[0] + 1, def_diffusion_steps[0][-1] + 1, MSE_Dist_7) + '\n')
+    f.write('\n')
+    f.write('Cos_sim_1 (clean image and adv. image) in embedding space: {}'.format(Cos_sim_1) + '\n')
+    f.write('Cos_sim_2 (clean image and noisy_image_1 (clean image add noise_1)) in embedding space: {}'.format(Cos_sim_2) + '\n')
+    f.write('Cos_sim_3 (clean image and noisy_image_2 (clean image add noise_1 and noise_2)) in embedding space: {}'.format(Cos_sim_3) + '\n')
+    f.write('Cos_sim_4 (noisy_image_1 (clean image add noise_1) and adv. image) in embedding space: {}'.format(Cos_sim_4) + '\n')
+    f.write('Cos_sim_5 (noisy_image_2 (clean image add noise_1 and noise_2) and adv. image) in embedding space: {}'.format(Cos_sim_5) + '\n')
+    f.write('Cos_sim_6 with F {} R {} (noisy_image_1 (clean image add noise_1) and diffused_img (adv. image f and r)) in embedding space: {}'.format(def_max_timesteps[0] + 1, def_diffusion_steps[0][-1] + 1, Cos_sim_6) + '\n')
+    f.write('Cos_sim_7 with F {} R {} (noisy_image_2 (clean image add noise_1 and noise_2) and noised_img (adv. image f)) in embedding space: {}'.format(def_max_timesteps[0] + 1, def_diffusion_steps[0][-1] + 1, Cos_sim_7) + '\n')
+
 
 # Output related images
 noised_img_out = ToImage(noised_img.squeeze(0).cpu())
