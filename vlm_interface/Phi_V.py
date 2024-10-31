@@ -36,10 +36,14 @@ class Chatbot:
 
         inputs = self.processor(prompt, [image], return_tensors="pt").to("cuda:0") 
 
+        # generation_args = { 
+        #     "max_new_tokens": 1000, 
+        #     "temperature": 0.0, 
+        #     "do_sample": False, 
+        # } 
         generation_args = { 
-            "max_new_tokens": 1000, 
-            "temperature": 0.0, 
-            "do_sample": False, 
+            "max_new_tokens": 1024, 
+            "do_sample": True, 
         } 
 
         generate_ids = self.model.generate(**inputs, 

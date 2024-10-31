@@ -18,7 +18,7 @@ class StoppingCriteriaSub(StoppingCriteria):
 class Generator:
 
     def __init__(self, model, max_new_tokens=300, num_beams=1, min_length=1, top_p=0.9,
-               repetition_penalty=1.0, length_penalty=1, temperature=1.0, device='cuda:0'):
+               repetition_penalty=1.0, length_penalty=1, temperature=1.0, device='cuda:0', sample=True):
 
         self.model = model
         self.device = device
@@ -30,6 +30,7 @@ class Generator:
         self.repetition_penalty = repetition_penalty
         self.length_penalty = length_penalty
         self.temperature = temperature
+        self.sample = sample
 
         stop_words_ids = [torch.tensor([835]).to(self.device),
                           torch.tensor([2277, 29937]).to(self.device)]  # '###' can be encoded in two different ways.
@@ -42,7 +43,7 @@ class Generator:
             max_new_tokens=self.max_new_tokens,
             stopping_criteria=self.stopping_criteria,
             num_beams=self.num_beams,
-            do_sample=True,
+            do_sample=self.sample,
             min_length=self.min_length,
             top_p=self.top_p,
             repetition_penalty=self.repetition_penalty,

@@ -94,7 +94,7 @@ class Chatbot:
 
         # set the max number of tiles in `max_num`
         pixel_values = load_image(image_path, max_num=12).to(torch.bfloat16).cuda()
-        generation_config = dict(max_new_tokens=1024, do_sample=False)
+        generation_config = dict(max_new_tokens=1024, do_sample=True)
 
         response = self.model.chat(self.tokenizer, pixel_values, prompt, generation_config)
         return response
