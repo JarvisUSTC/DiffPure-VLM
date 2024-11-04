@@ -14,7 +14,7 @@ class Chatbot:
         self.visual_tokenizer = self.model.get_visual_tokenizer()
         self.conversation_formatter = self.model.get_conversation_formatter()
     
-    def generate_response(self, image_path: str, prompt: str) -> str:
+    def generate_response(self, image_path: str, prompt: str, sample=False) -> str:
 
         image = Image.open(image_path)
         query = prompt
@@ -26,7 +26,7 @@ class Chatbot:
         with torch.inference_mode():
             gen_kwargs = dict(
                 max_new_tokens=1024,
-                do_sample=False,
+                do_sample=sample,
                 top_p=None,
                 top_k=None,
                 temperature=None,

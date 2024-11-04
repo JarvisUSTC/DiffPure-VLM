@@ -6,7 +6,7 @@ from llava.mm_utils import tokenizer_image_token
 from PIL import Image
 
 
-def model_inference(model, tokenizer, image, prompt, processor, max_new_tokens):
+def model_inference(model, tokenizer, image, prompt, processor, max_new_tokens, sample=False):
     
     image_tensor =  processor.preprocess([image], return_tensors='pt')['pixel_values'].to(torch.float16).cuda()
     
@@ -25,7 +25,7 @@ def model_inference(model, tokenizer, image, prompt, processor, max_new_tokens):
         generated_ids = model.generate(
             input_ids,
             images=image_tensor.unsqueeze(0),
-            do_sample=False,
+            do_sample=sample,
             temperature=1.0,
             max_new_tokens=max_new_tokens,
             min_new_tokens=1,
@@ -48,8 +48,8 @@ class Chatbot:
         self.tokenizer = tokenizer
         self.processor = processor
     
-    def generate_response(self, image_path: str, prompt: str) -> str:
+    def generate_response(self, image_path: str, prompt: str, sample=False) -> str:
         image = Image.open(image_path).convert('RGB')
-        output = model_inference(self.model, self.tokenizer, image, prompt, self.processor, max_new_tokens=1024)
+        output = model_inference(self.model, self.tokenizer, image, prompt, self.processor, max_new_tokens=102, sample=sample)
 
         return output

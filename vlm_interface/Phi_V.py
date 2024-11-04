@@ -20,7 +20,7 @@ class Chatbot:
             num_crops=4
         ) 
     
-    def generate_response(self, image_path: str, prompt: str) -> str:
+    def generate_response(self, image_path: str, prompt: str, sample=False) -> str:
 
         image = Image.open(image_path)
         query = prompt
@@ -43,7 +43,7 @@ class Chatbot:
         # } 
         generation_args = { 
             "max_new_tokens": 1024, 
-            "do_sample": True, 
+            "do_sample": sample, 
         } 
 
         generate_ids = self.model.generate(**inputs, 
