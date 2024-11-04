@@ -88,7 +88,7 @@ with torch.no_grad():
         text = image_prompt + text_prompt % user_message
 
         # response = xxx
-        response = model.generate_response(args.image_file, text)
+        response = model.generate_response(args.image_file, text, sample=True)
 
         print(" -- continuation: ---")
         print(response)
