@@ -50,6 +50,6 @@ class Chatbot:
     
     def generate_response(self, image_path: str, prompt: str, sample=False) -> str:
         image = Image.open(image_path).convert('RGB')
-        output = model_inference(self.model, self.tokenizer, image, prompt, self.processor, max_new_tokens=102, sample=sample)
+        output = model_inference(self.model, self.tokenizer, image, prompt, self.processor, max_new_tokens=1024, sample=sample)
 
         return output

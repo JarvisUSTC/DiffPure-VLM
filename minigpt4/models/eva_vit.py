@@ -411,29 +411,89 @@ def convert_weights_to_fp16(model: nn.Module):
 
     model.apply(_convert_weights_to_fp16)
     
+from transformers import PretrainedConfig, PreTrainedModel
+class VisionTransformerConfig(PretrainedConfig):
+    model_type = "vision_transformer"
+
+    def __init__(self, img_size=224, patch_size=14, embed_dim=1408, depth=39, num_heads=16, 
+                 mlp_ratio=4.3637, qkv_bias=True, drop_path_rate=0.1, use_checkpoint=False, 
+                 precision="fp16", **kwargs):
+        super().__init__(**kwargs)
+        self.img_size = img_size
+        self.patch_size = patch_size
+        self.embed_dim = embed_dim
+        self.depth = depth
+        self.num_heads = num_heads
+        self.mlp_ratio = mlp_ratio
+        self.qkv_bias = qkv_bias
+        self.drop_path_rate = drop_path_rate
+        self.use_checkpoint = use_checkpoint
+        self.precision = precision
+
+class VisionTransformerWrapper(PreTrainedModel):
+    config_class = VisionTransformerConfig
+
+    def __init__(self, config: VisionTransformerConfig):
+        super().__init__(config)
+        self.vision_transformer = VisionTransformer(
+            img_size=config.img_size,
+            patch_size=config.patch_size,
+            use_mean_pooling=False,
+            embed_dim=config.embed_dim,
+            depth=config.depth,
+            num_heads=config.num_heads,
+            mlp_ratio=config.mlp_ratio,
+            qkv_bias=config.qkv_bias,
+            drop_path_rate=config.drop_path_rate,
+            norm_layer=partial(nn.LayerNorm, eps=1e-6),
+            use_checkpoint=config.use_checkpoint
+        )
+        self.num_features = self.vision_transformer.num_features
+        self.config = config
+
+    def forward(self, pixel_values, **kwargs):
+        return self.vision_transformer(pixel_values, **kwargs)
+    
+    @classmethod
+    def from_pretrained_vision_transformer(cls, vision_transformer, config_kwargs=None):
+        config = cls.config_class(**(config_kwargs or {}))
+        return cls(config)
     
 def create_eva_vit_g(img_size=224,drop_path_rate=0.4,use_checkpoint=False,precision="fp16"):
-    model = VisionTransformer(
+    # model = VisionTransformer(
+    #     img_size=img_size,
+    #     patch_size=14,
+    #     use_mean_pooling=False,
+    #     embed_dim=1408,
+    #     depth=39,
+    #     num_heads=1408//88,
+    #     mlp_ratio=4.3637,
+    #     qkv_bias=True,
+    #     drop_path_rate=drop_path_rate,
+    #     norm_layer=partial(nn.LayerNorm, eps=1e-6),
+    #     use_checkpoint=use_checkpoint,
+    # )  
+
+    # VisionTransformerConfig
+    config = VisionTransformerConfig(
         img_size=img_size,
         patch_size=14,
-        use_mean_pooling=False,
         embed_dim=1408,
-        depth=39,
-        num_heads=1408//88,
-        mlp_ratio=4.3637,
-        qkv_bias=True,
         drop_path_rate=drop_path_rate,
-        norm_layer=partial(nn.LayerNorm, eps=1e-6),
         use_checkpoint=use_checkpoint,
-    )  
+        precision=precision
+    )
+
+    # 创建 VisionTransformerWrapper 并加载预训练权重
+    model = VisionTransformerWrapper(config)
     url = "https://storage.googleapis.com/sfr-vision-language-research/LAVIS/models/BLIP2/eva_vit_g.pth"
     cached_file = download_cached_file(
         url, check_hash=False, progress=True
     )
     state_dict = torch.load(cached_file, map_location="cpu")    
-    interpolate_pos_embed(model,state_dict)
+    interpolate_pos_embed(model.vision_transformer,state_dict)
     
-    incompatible_keys = model.load_state_dict(state_dict, strict=False)
+    incompatible_keys = model.vision_transformer.load_state_dict(state_dict, strict=False)
 #     print(incompatible_keys)
     
     if precision == "fp16":

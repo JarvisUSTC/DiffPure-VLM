@@ -27,7 +27,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description="Demo")
     parser.add_argument("--cfg_path", default="eval_configs/minigpt4_eval.yaml", help="path to configuration file.")
     parser.add_argument("--gpu_id", type=int, default=0, help="specify the gpu to load the model.")
-    parser.add_argument("--n_iters", type=int, default=500, help="specify the number of iterations for attack.")
+    parser.add_argument("--n_iters", type=int, default=5000, help="specify the number of iterations for attack.")
     parser.add_argument('--eps', type=int, default=32, help="epsilon of the attack budget")
     parser.add_argument('--alpha', type=int, default=1, help="step_size of the attack")
     parser.add_argument("--constrained", default=False, action='store_true')
@@ -120,5 +120,8 @@ else:
                                                             num_iter=5000, alpha=args.alpha / 255,
                                                             epsilon=args.eps / 255)
 
-save_image(adv_img_prompt, '%s/bad_prompt.bmp' % args.save_dir)
+if args.constrained:
+    save_image(adv_img_prompt, f'{args.save_dir}/MiniGPT4-13B-eps{args.eps}-alpha{args.alpha}-iters{args.n_iters}-constrained.bmp')
+else:
+    save_image(adv_img_prompt, f'{args.save_dir}/MiniGPT4-13B-alpha{args.alpha}-iters{args.n_iters}-unconstrained.bmp')
 print('[Done]')

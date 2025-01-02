@@ -14,7 +14,7 @@ def parse_args():
     parser.add_argument("--model_path", default="AIDC-AI/Ovis1.5-Gemma2-9B", help="path to configuration file.")
     parser.add_argument("--gpu-id", type=int, default=0, help="specify the gpu to load the model.")
     parser.add_argument("--clean", action='store_true', help="clean image.")
-    parser.add_argument("--output_file", type=str, default='./result.jsonl',
+    parser.add_argument("--output_file", type=str, default='./result.json',
                         help="Output file.")
 
     parser.add_argument(
@@ -55,7 +55,7 @@ with torch.no_grad():
         text = text_prompt
 
         # response = xxx
-        response = model.generate_response(image_path, text)
+        response = model.generate_response(image_path, text, sample=False)
 
         print(" -- continuation: ---")
         print(response)

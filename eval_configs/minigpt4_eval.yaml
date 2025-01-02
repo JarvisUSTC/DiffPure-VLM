@@ -8,7 +8,7 @@ model:
   low_resource: False
   prompt_path: ""
   prompt_template: '###Human: {} ###Assistant: '
-  ckpt: 'ckpts/pretrained_minigpt4.pth'
+  ckpt: 'ckpts/robustvlguard_minigpt4.pth'
 
 
 datasets:

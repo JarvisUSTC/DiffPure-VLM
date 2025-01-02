@@ -9,7 +9,11 @@ from minigpt4.common.registry import registry
 from minigpt4.models.blip2 import Blip2Base, disabled_train
 from minigpt4.models.modeling_llama import LlamaForCausalLM
 from transformers import LlamaTokenizer
-
+from peft import (
+    LoraConfig,
+    get_peft_model,
+    prepare_model_for_int8_training,
+)
 
 @registry.register_model("mini_gpt4")
 class MiniGPT4(Blip2Base):
@@ -50,6 +54,19 @@ class MiniGPT4(Blip2Base):
         self.visual_encoder, self.ln_vision = self.init_vision_encoder(
             vit_model, img_size, drop_path_rate, use_grad_checkpoint, vit_precision
         )
+        lora_r=16
+        lora_target_modules=["attn.qkv", "attn.proj", "mlp.fc1", "mlp.fc2"]
+        lora_alpha=32
+        lora_dropout=0.00
+        loraconfig = LoraConfig(
+            r=lora_r,
+            bias="none",
+            target_modules=lora_target_modules,
+            lora_alpha=lora_alpha,
+            lora_dropout=lora_dropout
+        )
+        self.visual_encoder = get_peft_model(self.visual_encoder, loraconfig)
+
         if freeze_vit:
             for name, param in self.visual_encoder.named_parameters():
                 param.requires_grad = False
@@ -268,6 +285,7 @@ class MiniGPT4(Blip2Base):
             device_8bit=device_8bit,
         )
 
+        print(model)
         ckpt_path = cfg.get("ckpt", "")  # load weights of MiniGPT-4
         if ckpt_path:
             print("Load BLIP2-LLM Checkpoint: {}".format(ckpt_path))

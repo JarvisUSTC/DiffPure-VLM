@@ -83,6 +83,7 @@ class PurificationForward(torch.nn.Module):
         return logits
 
     def forward(self, x):
+        original_size = x.shape[-2:]
         # diffusion part
         if self.is_imagenet:
             x = F.interpolate(x, size=(256, 256),
@@ -94,8 +95,7 @@ class PurificationForward(torch.nn.Module):
 
         # classifier part
         if self.is_imagenet:
-            x_clf = normalize(diff2clf(F.interpolate(x_diff, size=(
-                224, 224), mode='bilinear', align_corners=False)))
+            x_clf = normalize(diff2clf(F.interpolate(x_diff, size=original_size, mode='bilinear', align_corners=False)))
         else:
             x_clf = diff2clf(x_diff)
         # 可视化diffusion后的图像
@@ -117,4 +117,4 @@ class PurificationForward(torch.nn.Module):
             plt.imshow(vis[i].cpu().numpy())
             plt.axis("off")
 
-            plt.savefig(f"diffusion_{i}.png")
+            plt.savefig(f"diffusion_{i}.png", bbox_inches='tight', pad_inches=0)

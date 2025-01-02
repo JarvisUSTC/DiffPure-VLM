@@ -17,7 +17,7 @@ class StoppingCriteriaSub(StoppingCriteria):
 
 class Generator:
 
-    def __init__(self, model, max_new_tokens=300, num_beams=1, min_length=1, top_p=0.9,
+    def __init__(self, model, max_new_tokens=100, num_beams=1, min_length=1, top_p=0.9,
                repetition_penalty=1.0, length_penalty=1, temperature=1.0, device='cuda:0', sample=True):
 
         self.model = model
