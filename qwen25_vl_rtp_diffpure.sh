@@ -16,7 +16,7 @@ fi
 
 # CUDA_VISIBLE_DEVICES=7 python qwen2vl_general_inference.py --model_path $model_path  --gpu-id 0 --image_file $image_prompt_path --input_file harmful_corpus/rtp_prompts_challenges_7.jsonl --output_file $output_path/rtp_prompts_challenges_7.jsonl
 # 限制可见GPU
-nohup bash -c "CUDA_VISIBLE_DEVICES=4 python qwen25vl_general_inference.py --model_path "Qwen/Qwen2.5-VL-7B-Instruct" --gpu-id 0 --image_file $image_prompt_path --input_file harmful_corpus/rtp_prompts.jsonl --output_file $output_path/rtp_prompts_challenges.jsonl --def_max_timesteps $def_num_denoising_steps --def_num_denoising_steps $def_num_denoising_steps" > $output_path/output.log 2>&1 &
+nohup bash -c "CUDA_VISIBLE_DEVICES=4 python qwen25vl_general_inference_diffpure.py --model_path "Qwen/Qwen2.5-VL-7B-Instruct" --gpu-id 0 --image_file $image_prompt_path --input_file harmful_corpus/rtp_prompts.jsonl --output_file $output_path/rtp_prompts_challenges.jsonl --def_max_timesteps $def_num_denoising_steps --def_num_denoising_steps $def_num_denoising_steps" > $output_path/output.log 2>&1 &
 
 echo "Started all processes"
 
