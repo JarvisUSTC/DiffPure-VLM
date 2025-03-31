@@ -66,7 +66,7 @@ We also provide a noisy version of MMVet benchmark, which can be downloaded from
 
 Our Robust-VLGuard dataset has been preprocessed and is ready for fine-tuning. You can use the official code from the respective VLMs to fine-tune them with our dataset. For example, to fine-tune llava, refer to the finetuning_scripts/llava.sh script.
 
-### Evaluation on RealToxicityPrompts
+### 🚀 Evaluation on RealToxicityPrompts
 
 To evaluate the VLMs on the RealToxicityPrompts benchmark, you can use the following command:
 
@@ -82,7 +82,7 @@ bash general_scripts/omi_eval_rtp.sh {OUTPUT_PATH} adversarial_images_add_noise_
 
 adversarial_images/clean.jpeg refers to the clean image, and adversarial_images_add_noise_G30/clean.jpeg refers to the image with Gaussian noise added. You can easily change the image path in the script.
 
-### Evaluation on MMVet
+### 🚀 Evaluation on MMVet
 
 To evaluate LLaVA on the MMVet benchmark, you can use the following command:
 
@@ -100,7 +100,7 @@ python llava_inference_mmvet.py --model_path {MODEL_PATH} --output_path {OUTPUT_
 
 For MiniGPT4, you can refer to minigpt_inference_mmvet.py.
 
-### Optimized-based Adversarial Attack
+### 🚀 Optimized-based Adversarial Attack
 To generate adversarial examples for LLaVA, you can use the following command:
 
 ```bash
