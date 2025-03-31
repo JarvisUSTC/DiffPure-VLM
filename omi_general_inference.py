@@ -58,6 +58,9 @@ elif str.lower("InternVL2") in str.lower(args.model_path):
 elif "Phi" in args.model_path:
     from vlm_interface.Phi_V import Chatbot
     model = Chatbot(args.model_path, device='cuda')
+elif "ivy-vl" in str.lower(args.model_path):
+    from vlm_interface.IvyLLaVA import Chatbot
+    model = Chatbot(args.model_path, device='cuda')
 elif "llava" in str.lower(args.model_path):
     from vlm_interface.LLaVA import Chatbot
     model = Chatbot(args.model_path, device='cuda')
@@ -81,6 +84,8 @@ with torch.no_grad():
         print(text_prompt % user_message)
         if "Phi" in args.model_path:
             image_prompt = "<|image_1|>"
+        elif "ivy-vl" in str.lower(args.model_path):
+            image_prompt = ""
         elif "llava" in str.lower(args.model_path):
             image_prompt = "" # append image token in the Chatbot
         else:

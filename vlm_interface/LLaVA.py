@@ -36,7 +36,7 @@ def model_inference(model, tokenizer, image, prompt, processor, max_new_tokens, 
 
 def load_model(model_path, args=None):
     tokenizer, model, image_processor, context_len = load_llava_model(model_path=model_path, model_base=None, model_name='llava', 
-                                                                      use_flash_attn=False, torch_dtype='float16', device_map='cuda',)
+                                                                      attn_implementation='flash_attention_2',torch_dtype='float16', device_map='cuda',)
     processor = image_processor
     return model, tokenizer, processor
 

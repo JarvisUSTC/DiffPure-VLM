@@ -29,11 +29,11 @@ def parse_args():
 
 args = parse_args()
 
-mmvet_path = "/home/t-jiaweiwang/Project/InternVL/internvl_chat/data/mm-vet/llava-mm-vet.jsonl"
+mmvet_path = "/blob/data/MLLM-Evaluation/data/mm-vet/llava-mm-vet.jsonl"
 if args.clean:
-    image_dir = "/home/t-jiaweiwang/Project/InternVL/internvl_chat/data/mm-vet/images/"
+    image_dir = "/blob/data/MLLM-Evaluation/data/mm-vet/images/"
 else:
-    image_dir = "/home/t-jiaweiwang/Project/InternVL/internvl_chat/data/mm-vet/noisy_images/"
+    image_dir = "/blob/data/MLLM-Evaluation/data/mm-vet/noisy_images/"
 datasets = []
 with open(mmvet_path, "r") as f:
     for line in f:
