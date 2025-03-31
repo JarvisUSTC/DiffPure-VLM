@@ -124,7 +124,7 @@ For minigpt4 and qwen25_vl, you can refer to minigpt_scripts/minigpt_eval_rtp_di
 ---
 
 ## 📊 Experimental Results
-Explore comprehensive experimental results and detailed analysis in our paper and supplementary materials.
+Explore comprehensive experimental results and detailed analysis in our paper and supplementary materials. Specific results can be found in results/.
 
 ![Table 1](assets/Table2.png)
 ![Table 2](assets/Table4.png)
